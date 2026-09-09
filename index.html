@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choose your theme — carousel demo</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="vc-content-wrap">
+  <div class="page">
+    <h1>Theme carousel demo</h1>
+    <p class="lede">This page uses six shared CSS variables — <code>--bg</code>, <code>--surface</code>, <code>--border</code>, <code>--text</code>, <code>--text-2</code>, <code>--accent</code> — so every theme is a drop-in swap. The picker itself is a generic, reusable carousel component with no theme-specific logic baked in.</p>
+
+    <button class="open-picker-btn" id="openPicker">
+      <span class="swatch-dot" id="currentSwatchDot"></span>
+      <span id="currentThemeLabel">Dark theme</span> — change
+    </button>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <h2>Sample card</h2>
+      <p>This box uses --surface for its background and --border for its outline, so it always matches whichever theme is active.</p>
+    </div>
+    <div class="card">
+      <h2>Another section</h2>
+      <p>Secondary text like this uses --text-2, and the button below uses --accent.</p>
+      <div style="margin-top:12px;">
+        <button class="btn-accent">Accent action</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mount point for the carousel modal markup (populated by code.js) -->
+<div id="themePickerMount"></div>
+
+<script src="custom-html.js" type="module"></script>
+<script src="code.js" type="module"></script>
+
+</body>
+</html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tidbit-carousel — capability test suite</title>
+<style>
+  :root {
+    --bg: #0c0d10;
+    --panel: #14161b;
+    --panel-2: #1a1d24;
+    --line: #2a2e37;
+    --text: #d7dae0;
+    --dim: #7a8090;
+    --accent: #5fd0c0;
+    --accent-2: #e8a355;
+    --danger: #e2635c;
+    --mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", -apple-system, Segoe UI, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 0 0 4rem;
+    line-height: 1.5;
+  }
+
+  header {
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 50;
+  }
+
+  header h1 {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 0 0 0.35rem;
+    color: var(--text);
+  }
+
+  header p {
+    margin: 0;
+    color: var(--dim);
+    font-size: 0.85rem;
+    max-width: 68ch;
+  }
+
+  .notice {
+    margin-top: 0.9rem;
+    font-size: 0.78rem;
+    color: var(--accent-2);
+    background: #1f1a13;
+    border: 1px solid #3a2c1a;
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    max-width: 68ch;
+  }
+
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1rem;
+  }
+
+  .toc a {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--dim);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+  }
+
+  .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  section.test {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  section.test .test-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+  }
+
+  section.test h2 {
+    font-size: 0.95rem;
+    font-family: var(--mono);
+    color: var(--accent);
+    margin: 0;
+  }
+
+  section.test .spec {
+    font-size: 0.78rem;
+    color: var(--dim);
+    font-family: var(--mono);
+  }
+
+  section.test p.desc {
+    font-size: 0.85rem;
+    color: var(--dim);
+    max-width: 74ch;
+    margin: 0 0 1rem;
+  }
+
+  .stage {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1.25rem;
+  }
+
+  tidbit-carousel {
+    display: block;
+    width: 100%;
+    height: 220px;
+    outline: none;
+  }
+
+  tidbit-carousel:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+
+  tidbit-carousel.vert { height: 380px; }
+
+  .card {
+    width: 128px;
+    height: 168px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: #0c0d10;
+    user-select: none;
+    cursor: pointer;
+  }
+
+  .card.wide { width: 220px; height: 120px; }
+  .card.tall2 { width: 100px; height: 260px; }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  button {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+  }
+
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button:active { transform: translateY(1px); }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .telemetry {
+    margin-top: 0.85rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--dim);
+    background: #0a0b0d;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.15rem 1rem;
+  }
+
+  .telemetry b { color: var(--accent-2); }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 860px) {
+    .grid2 { grid-template-columns: 1fr; }
+  }
+
+  .log { margin-top: 2.5rem; }
+
+  .log h2 {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent-2);
+  }
+
+  #event-log {
+    height: 220px;
+    overflow-y: auto;
+    background: #0a0b0d;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--dim);
+  }
+
+  #event-log div { padding: 0.1rem 0; border-bottom: 1px dotted #1e2128; }
+  #event-log .tag { color: var(--accent); margin-right: 0.5rem; }
+  #event-log .src { color: var(--accent-2); margin-right: 0.5rem; }
+
+  .flag {
+    position: fixed;
+    bottom: 1.2rem;
+    right: 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    max-width: 260px;
+    z-index: 60;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&lt;tidbit-carousel&gt; — capability test suite</h1>
+  <p>Each panel below drives a distinct part of the component's surface: layout axes, wrap/no-wrap boundaries, scroll input sources, autoscroll timing and interruption, focus/pause lifecycle, dynamic content mutation, per-item sizing, and justification gating. Numbers shown are live values read straight off the element's public getters.</p>
+  <div class="notice">
+    Hook functions (<code>init_hook</code>, <code>scroll_hook</code>, <code>focus_hook</code>, etc.) can only be supplied through HTML attributes, and attributes can't carry function values — so no external script, including this one, can actually register a hook callback on a declaratively-created instance without editing the component's own source. Section 08 and the shared log below instead reconstruct the same transitions by polling the public getters every frame and diffing them, which observes the identical state changes the hooks would fire on — logged with a <code>*</code> suffix to mark them as inferred rather than hook-invoked.
+  </div>
+  <div class="toc" id="toc"></div>
+</header>
+
+<main>
+
+  <section class="test" id="t-basics">
+    <div class="test-head">
+      <h2>01 · Baseline — horizontal, wrap, coverflow</h2>
+      <span class="spec">exposed-items=5 · scale-mult=0.82 · alpha-mult=0.85 · wrap</span>
+    </div>
+    <p class="desc">The reference configuration. Click any card to scroll to it, use arrow keys / Tab / mouse wheel while focused, or drive it with the buttons below. Watch the opacity at the edges — it should fade smoothly across the last visible slot, not clip abruptly.</p>
+    <div class="stage">
+      <tidbit-carousel
+        id="c-basics"
+        exposed-items="5"
+        wrap-items="true"
+        stack-alignment="horizontal"
+        items-alignment="center"
+        items-separation="1.25rem"
+        items-scale-mult="0.82"
+        items-alpha-mult="0.85"
+        scroll-speed="6"
+        scroll-sensitivity="1"
+      >
+        <div class="card" style="background:#5fd0c0">1</div>
+        <div class="card" style="background:#e8a355">2</div>
+        <div class="card" style="background:#e2635c">3</div>
+        <div class="card" style="background:#7c9ce8">4</div>
+        <div class="card" style="background:#c583e8">5</div>
+        <div class="card" style="background:#f0d264;color:#333">6</div>
+        <div class="card" style="background:#8fd45f">7</div>
+      </tidbit-carousel>
+      <div class="controls">
+        <button data-act="scroll" data-target="c-basics" data-args="arrows_horizontal,-1">&larr; scroll(-1)</button>
+        <button data-act="scroll" data-target="c-basics" data-args="arrows_horizontal,1">scroll(+1) &rarr;</button>
+        <button data-act="scroll-abs" data-target="c-basics" data-args="click_item,0">go to index 0</button>
+        <button data-act="scroll-abs" data-target="c-basics" data-args="click_item,3">go to index 3</button>
+        <button data-act="focus" data-target="c-basics">focus()</button>
+        <button data-act="unfocus" data-target="c-basics">unfocus()</button>
+      </div>
+      <div class="telemetry" data-telemetry="c-basics"></div>
+    </div>
+  </section>
+
+  <section class="test" id="t-noWrap">
+    <div class="test-head">
+      <h2>02 · No-wrap boundary clamping</h2>
+      <span class="spec">wrap-items=false · exposed-items=3</span>
+    </div>
+    <p class="desc">With wrapping off, scrolling should hard-stop at index 0 and the last index — no ghost clones should ever appear past either end. Spam the boundary buttons to confirm it clamps instead of drifting or erroring.</p>
+    <div class="stage">
+      <tidbit-carousel
+        id="c-nowrap"
+        exposed-items="3"
+        wrap-items="false"
+        stack-alignment="horizontal"
+        items-separation="1rem"
+        items-scale-mult="0.8"
+        items-alpha-mult="0.8"
+        scroll-speed="8"
+      >
+        <div class="card" style="background:#5fd0c0">A</div>
+        <div class="card" style="background:#e8a355">B</div>
+        <div class="card" style="background:#e2635c">C</div>
+        <div class="card" style="background:#7c9ce8">D</div>
+        <div class="card" style="background:#c583e8">E</div>
+      </tidbit-carousel>
+      <div class="controls">
+        <button data-act="scroll" data-target="c-nowrap" data-args="arrows_horizontal,-1">&larr;</button>
+        <button data-act="scroll" data-target="c-nowrap" data-args="arrows_horizontal,1">&rarr;</button>
+        <button data-act="scroll" data-target="c-nowrap" data-args="arrows_horizontal,-99">jump to start (-99)</button>
+        <button data-act="scroll" data-target="c-nowrap" data-args="arrows_horizontal,99">jump to end (+99)</button>
+      </div>
+      <div class="telemetry" data-telemetry="c-nowrap"></div>
+    </div>
+  </section>
+
+  <section class="test" id="t-vertical">
+    <div class="test-head">
+      <h2>03 · Vertical stacking + cross-axis alignment</h2>
+      <span class="spec">stack-alignment=vertical · items-alignment=start / end</span>
+    </div>
+    <p class="desc">Same content, stacking top-to-bottom instead of left-to-right, each with a different cross-axis alignment. Confirms the axis swap and alignment math both work outside the horizontal default.</p>
+    <div class="grid2">
+      <div class="stage">
+        <p class="spec" style="margin:0 0 .5rem">items-alignment="start"</p>
+        <tidbit-carousel id="c-vert-start" class="vert" exposed-items="3" wrap-items="true" stack-alignment="vertical" items-alignment="start" items-separation="0.75rem" items-scale-mult="0.85" items-alpha-mult="0.8">
+          <div class="card wide" style="background:#5fd0c0">1</div>
+          <div class="card wide" style="background:#e8a355">2</div>
+          <div class="card wide" style="background:#e2635c">3</div>
+          <div class="card wide" style="background:#7c9ce8">4</div>
+        </tidbit-carousel>
+      </div>
+      <div class="stage">
+        <p class="spec" style="margin:0 0 .5rem">items-alignment="end"</p>
+        <tidbit-carousel id="c-vert-end" class="vert" exposed-items="3" wrap-items="true" stack-alignment="vertical" items-alignment="end" items-separation="0.75rem" items-scale-mult="0.85" items-alpha-mult="0.8">
+          <div class="card wide" style="background:#5fd0c0">1</div>
+          <div class="card wide" style="background:#e8a355">2</div>
+          <div class="card wide" style="background:#e2635c">3</div>
+          <div class="card wide" style="background:#7c9ce8">4</div>
+        </tidbit-carousel>
+      </div>
+    </div>
+  </section>
+
+  <section class="test" id="t-mixedsize">
+    <div class="test-head">
+      <h2>04 · Mixed item sizes + live resize</h2>
+      <span class="spec">heterogeneous widths · ResizeObserver</span>
+    </div>
+    <p class="desc">Items here are deliberately different widths. Slot pitch should track each item's own measured size rather than a fixed column width, so spacing looks even by edge, not by center. Grow the "R" card at runtime and confirm neighbors reflow live.</p>
+    <div class="stage">
+      <tidbit-carousel id="c-mixed" exposed-items="5" wrap-items="true" stack-alignment="horizontal" items-alignment="center" items-separation="1rem" items-scale-mult="0.85" items-alpha-mult="0.85">
+        <div class="card" style="background:#5fd0c0;width:90px">S</div>
+        <div class="card wide" style="background:#e8a355">WIDE</div>
+        <div class="card" style="background:#e2635c">M</div>
+        <div class="card tall2" style="background:#7c9ce8">TALL</div>
+        <div class="card" id="resizable-card" style="background:#c583e8">R</div>
+        <div class="card" style="background:#f0d264;color:#333">M</div>
+      </tidbit-carousel>
+      <div class="controls">
+        <button data-act="grow-resizable">grow "R" card +80px</button>
+        <button data-act="shrink-resizable">reset "R" card</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="test" id="t-autoscroll">
+    <div class="test-head">
+      <h2>05 · Autoscroll timing, interruption, and resume</h2>
+      <span class="spec">autoscroll-time=1200 · autoscroll-speed=1 (1 index/sec)</span>
+    </div>
+    <p class="desc">Left alone, this advances one slot every 1.2s of dwell, taking exactly 1 second to glide between slots at speed 1. Hover it mid-glide — the motion should halt exactly where it is, not snap ahead to the slot it was heading toward — then move the mouse away to watch autoscroll resume from a fresh dwell.</p>
+    <div class="stage">
+      <tidbit-carousel
+        id="c-autoscroll"
+        exposed-items="5"
+        wrap-items="true"
+        items-separation="1rem"
+        items-scale-mult="0.85"
+        items-alpha-mult="0.85"
+        autoscroll-time="1200"
+        autoscroll-speed="1"
+        focus-justification="mouse_enter"
+        unfocus-justification="mouse_leave"
+      >
+        <div class="card" style="background:#5fd0c0">1</div>
+        <div class="card" style="background:#e8a355">2</div>
+        <div class="card" style="background:#e2635c">3</div>
+        <div class="card" style="background:#7c9ce8">4</div>
+        <div class="card" style="background:#c583e8">5</div>
+        <div class="card" style="background:#f0d264;color:#333">6</div>
+      </tidbit-carousel>
+      <div class="controls">
+        <button data-act="pause" data-target="c-autoscroll">pause('off_screen')</button>
+        <button data-act="play" data-target="c-autoscroll">play('visible')</button>
+      </div>
+      <div class="telemetry" data-telemetry="c-autoscroll"></div>
+    </div>
+  </section>
+
+  <section class="test" id="t-visibility">
+    <div class="test-head">
+      <h2>06 · IntersectionObserver auto pause/play</h2>
+      <span class="spec">off_screen ⇄ visible via scroll-into-view</span>
+    </div>
+    <p class="desc">This carousel sits inside a horizontally scrollable strip, offset off to the side. Scroll the strip to move it fully out of view and back — <code>paused</code> should flip automatically via the IntersectionObserver, with no manual pause() call involved.</p>
+    <div class="stage" style="overflow-x: auto; white-space: nowrap;">
+      <div style="display:inline-block; width: 700px; height: 1px;"></div>
+      <div style="display:inline-block; width: 340px; vertical-align: top; white-space: normal;">
+        <tidbit-carousel id="c-visibility" exposed-items="3" wrap-items="true" items-separation="0.75rem" items-scale-mult="0.85" items-alpha-mult="0.85" autoscroll-time="800" autoscroll-speed="1.5">
+          <div class="card" style="background:#5fd0c0">1</div>
+          <div class="card" style="background:#e8a355">2</div>
+          <div class="card" style="background:#e2635c">3</div>
+          <div class="card" style="background:#7c9ce8">4</div>
+        </tidbit-carousel>
+      </div>
+      <div style="display:inline-block; width: 700px; height: 1px;"></div>
+    </div>
+    <div class="telemetry" data-telemetry="c-visibility"></div>
+  </section>
+
+  <section class="test" id="t-dynamic">
+    <div class="test-head">
+      <h2>07 · Dynamic content mutation</h2>
+      <span class="spec">runtime append / remove of real children</span>
+    </div>
+    <p class="desc">Append and remove cards at runtime, no reload. This stresses <code>#realChildren()</code>, the ghost pool, and every item-count-dependent calculation (wrap modulus, boundary clamp) being recomputed live rather than cached once at init.</p>
+    <div class="stage">
+      <tidbit-carousel id="c-dynamic" exposed-items="4" wrap-items="true" items-separation="1rem" items-scale-mult="0.85" items-alpha-mult="0.85">
+        <div class="card" style="background:#5fd0c0">1</div>
+        <div class="card" style="background:#e8a355">2</div>
+        <div class="card" style="background:#e2635c">3</div>
+      </tidbit-carousel>
+      <div class="controls">
+        <button data-act="append-card">append card</button>
+        <button data-act="remove-last-card" class="danger">remove last card</button>
+      </div>
+      <div class="telemetry" data-telemetry="c-dynamic"></div>
+    </div>
+  </section>
+
+  <section class="test" id="t-hooks">
+    <div class="test-head">
+      <h2>08 · Justification gating + lifecycle transitions</h2>
+      <span class="spec">scroll-justification trimmed to click_item only</span>
+    </div>
+    <p class="desc">This instance's scroll justification list is trimmed to <code>click_item</code> — wheel and keyboard scrolling are deliberately disabled here. Try the arrow-scroll button below; it should be a genuine no-op, proving the justification arrays actually gate their triggers rather than always firing. Lifecycle transitions (focus/pause/scroll/removal) are surfaced in the shared log via the getter-diffing described above.</p>
+    <div class="stage">
+      <tidbit-carousel
+        id="c-hooks"
+        exposed-items="5"
+        wrap-items="true"
+        items-separation="1rem"
+        items-scale-mult="0.85"
+        items-alpha-mult="0.85"
+        scroll-justification="click_item"
+        focus-justification="click,mouse_enter"
+        unfocus-justification="click_away,mouse_leave"
+        selectItem-justification="click,enter"
+        pause-justification="off_screen"
+        play-justification="visible"
+      >
+        <div class="card" style="background:#5fd0c0">1</div>
+        <div class="card" style="background:#e8a355">2</div>
+        <div class="card" style="background:#e2635c">3</div>
+        <div class="card" style="background:#7c9ce8">4</div>
+        <div class="card" style="background:#c583e8">5</div>
+      </tidbit-carousel>
+      <div class="controls">
+        <button data-act="scroll" data-target="c-hooks" data-args="arrows_horizontal,1">try arrow-scroll (expect no-op)</button>
+        <button data-act="remove" data-target="c-hooks" class="danger">remove()</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="test" id="t-name">
+    <div class="test-head">
+      <h2>09 · Multi-instance isolation via <code>name</code></h2>
+      <span class="spec">config.name getter</span>
+    </div>
+    <p class="desc">Two independent instances. Scroll each one and confirm in the log below that state changes are correctly attributed per-instance-id, and that each carousel's own <code>name</code> getter reports back its own value rather than leaking config between elements.</p>
+    <div class="grid2">
+      <div class="stage">
+        <tidbit-carousel id="c-name-a" name="alpha-deck" exposed-items="3" wrap-items="true" items-separation="0.75rem" items-scale-mult="0.85" items-alpha-mult="0.85">
+          <div class="card" style="background:#5fd0c0">A1</div>
+          <div class="card" style="background:#e8a355">A2</div>
+          <div class="card" style="background:#e2635c">A3</div>
+          <div class="card" style="background:#7c9ce8">A4</div>
+        </tidbit-carousel>
+        <p class="spec" style="margin-top:.6rem">name getter → <span id="name-a-out"></span></p>
+      </div>
+      <div class="stage">
+        <tidbit-carousel id="c-name-b" name="beta-deck" exposed-items="3" wrap-items="true" items-separation="0.75rem" items-scale-mult="0.85" items-alpha-mult="0.85">
+          <div class="card" style="background:#f0d264;color:#333">B1</div>
+          <div class="card" style="background:#c583e8">B2</div>
+          <div class="card" style="background:#7c9ce8">B3</div>
+          <div class="card" style="background:#e2635c">B4</div>
+        </tidbit-carousel>
+        <p class="spec" style="margin-top:.6rem">name getter → <span id="name-b-out"></span></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="log">
+    <h2>Live lifecycle log</h2>
+    <div id="event-log"></div>
+  </div>
+
+</main>
+
+<div class="flag">Telemetry panels poll public getters at 10fps. Every number here is read straight from the live component instance — nothing is simulated.</div>
+
+<script src="custom-html.js"></script>
+<script>
+(() => {
+
+  const logEl = document.getElementById('event-log');
+  const LOG_CAP = 400;
+
+  function logEvent(source, tag, detail) {
+    const row = document.createElement('div');
+    row.innerHTML =
+      `<span class="src">${source}</span>` +
+      `<span class="tag">${tag}</span>` +
+      (detail !== undefined ? String(detail) : '');
+    logEl.appendChild(row);
+    logEl.scrollTop = logEl.scrollHeight;
+    while (logEl.children.length > LOG_CAP) {
+      logEl.removeChild(logEl.firstChild);
+    }
+  }
+
+  // Table of contents
+  const toc = document.getElementById('toc');
+  document.querySelectorAll('section.test').forEach(sec => {
+    const h2 = sec.querySelector('h2');
+    const a = document.createElement('a');
+    a.href = '#' + sec.id;
+    a.textContent = h2.textContent.split('·')[0].trim();
+    toc.appendChild(a);
+  });
+
+  // Getter-diffing instrumentation (see header notice: hooks
+  // cannot be attached externally since they're only settable
+  // via attributes, which can't hold function values). This
+  // observes the same public state the hooks would report.
+  const watched = new Map();
+
+  function watch(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    watched.set(id, { el, prev: null });
+  }
+
+  function snapshot(el) {
+    return {
+      selected_item: el.selected_item,
+      focused: el.focused,
+      playing: el.playing,
+      paused: el.paused,
+      scrolling: el.scrolling,
+      autoscrolling: el.autoscrolling
+    };
+  }
+
+  function diffAndLog(id, entry) {
+    const s = snapshot(entry.el);
+    if (!entry.prev) { entry.prev = s; return; }
+    const p = entry.prev;
+
+    if (s.selected_item !== p.selected_item) {
+      logEvent(id, 'scroll*', `selected_item ${p.selected_item} \u2192 ${s.selected_item}`);
+    }
+    if (s.focused !== p.focused) {
+      logEvent(id, s.focused ? 'focus*' : 'unfocus*', `focused = ${s.focused}`);
+    }
+    if (s.paused !== p.paused) {
+      logEvent(id, s.paused ? 'pause*' : 'play*', `paused = ${s.paused}`);
+    }
+    if (s.autoscrolling !== p.autoscrolling) {
+      logEvent(id, 'autoscroll', `autoscrolling = ${s.autoscrolling}`);
+    }
+
+    entry.prev = s;
+  }
+
+  function renderTelemetry(el, target) {
+    if (typeof el.scroll_position !== 'number') {
+      target.textContent = 'not initialized';
+      return;
+    }
+    target.innerHTML = [
+      ['selected_item', el.selected_item],
+      ['scroll_position', el.scroll_position.toFixed(3)],
+      ['focused', el.focused],
+      ['playing', el.playing],
+      ['paused', el.paused],
+      ['scrolling', el.scrolling],
+      ['autoscrolling', el.autoscrolling]
+    ].map(([k, v]) => `<span><b>${k}</b> ${v}</span>`).join('');
+  }
+
+  function tick() {
+    document.querySelectorAll('[data-telemetry]').forEach(panel => {
+      const id = panel.getAttribute('data-telemetry');
+      const el = document.getElementById(id);
+      if (el) renderTelemetry(el, panel);
+    });
+    watched.forEach((entry, id) => diffAndLog(id, entry));
+
+    const a = document.getElementById('c-name-a');
+    const b = document.getElementById('c-name-b');
+    if (a) document.getElementById('name-a-out').textContent = a.name;
+    if (b) document.getElementById('name-b-out').textContent = b.name;
+
+    setTimeout(tick, 100);
+  }
+  tick();
+
+  document.querySelectorAll('button[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const act = btn.dataset.act;
+      const targetId = btn.dataset.target;
+      const el = targetId ? document.getElementById(targetId) : null;
+      const args = btn.dataset.args ? btn.dataset.args.split(',') : [];
+
+      switch (act) {
+        case 'scroll': {
+          const [justification, amount] = args;
+          el.scroll(justification, Number(amount));
+          break;
+        }
+        case 'scroll-abs': {
+          const [justification, index] = args;
+          el.scroll(justification, Number(index), false);
+          break;
+        }
+        case 'focus':
+          el.focus('click');
+          break;
+        case 'unfocus':
+          el.unfocus('click_away');
+          break;
+        case 'pause':
+          el.pause('off_screen');
+          break;
+        case 'play':
+          el.play('visible');
+          break;
+        case 'remove':
+          logEvent(targetId, 'remove()', 'removing element from DOM');
+          el.remove();
+          break;
+        case 'grow-resizable': {
+          const card = document.getElementById('resizable-card');
+          card.style.width = (card.offsetWidth + 80) + 'px';
+          break;
+        }
+        case 'shrink-resizable': {
+          const card = document.getElementById('resizable-card');
+          card.style.width = '128px';
+          break;
+        }
+        case 'append-card': {
+          const target = document.getElementById('c-dynamic');
+          const n = target.querySelectorAll('.card').length + 1;
+          const colors = ['#5fd0c0', '#e8a355', '#e2635c', '#7c9ce8', '#c583e8', '#f0d264'];
+          const bg = colors[n % colors.length];
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.background = bg;
+          card.style.color = bg === '#f0d264' ? '#333' : '#0c0d10';
+          card.textContent = n;
+          target.appendChild(card);
+          logEvent('c-dynamic', 'mutation', `appended card #${n}`);
+          break;
+        }
+        case 'remove-last-card': {
+          const target = document.getElementById('c-dynamic');
+          const cards = target.querySelectorAll('.card');
+          if (cards.length > 1) {
+            cards[cards.length - 1].remove();
+            logEvent('c-dynamic', 'mutation', 'removed last card');
+          }
+          break;
+        }
+      }
+    });
+  });
+
+  [
+    'c-basics', 'c-nowrap', 'c-autoscroll', 'c-visibility',
+    'c-dynamic', 'c-hooks', 'c-name-a', 'c-name-b'
+  ].forEach(watch);
+
+  logEvent('suite', 'ready', `${document.querySelectorAll('tidbit-carousel').length} tidbit-carousel instances mounted`);
+
+})();
+</script>
+
+</body>
+</html>
