@@ -1,20 +1,44 @@
 /* ==========================================================================
-   THEMES.CSS
-   Theme palette CSS custom properties + base page styling.
-   ========================================================================== */
-
-/* ==========================================================================
    THEME PALETTES
-   Every theme defines the same 6 custom properties. Swapping a theme is
-   just changing the [data-theme="..."] attribute on <html> — nothing else
-   in this file (or anywhere else on the page) should reference raw colors.
    ========================================================================== */
 
 :root {
   --transition-theme: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
-/* 1. Dark (default) */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: var(--bg);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Suppress the default browser focus ring everywhere (buttons,
+   carousels, theme cards, etc.) — :focus-visible below restores it
+   only for genuine keyboard navigation, so accessibility isn't
+   lost, just the ring appearing on every mouse click/carousel
+   focus() call. */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body {
+  font-family: "Chakra Petch", sans-serif;
+}
+
 html[data-theme="dark"] {
   --bg: #121212;
   --surface: #1e1e1e;
@@ -24,7 +48,6 @@ html[data-theme="dark"] {
   --accent: #d0d0d0;
 }
 
-/* 2. Light */
 html[data-theme="light"] {
   --bg: #ffffff;
   --surface: #f2f2f2;
@@ -34,7 +57,6 @@ html[data-theme="light"] {
   --accent: #333333;
 }
 
-/* 3. Night ocean */
 html[data-theme="night-ocean"] {
   --bg: #0a1218;
   --surface: #13202b;
@@ -44,7 +66,6 @@ html[data-theme="night-ocean"] {
   --accent: #2fa88f;
 }
 
-/* 4. Embers */
 html[data-theme="embers"] {
   --bg: #242220;
   --surface: #322e2b;
@@ -54,7 +75,6 @@ html[data-theme="embers"] {
   --accent: #ff5a1f;
 }
 
-/* 5. Aurora */
 html[data-theme="aurora"] {
   --bg: #100c1a;
   --surface: #1b1530;
@@ -64,7 +84,6 @@ html[data-theme="aurora"] {
   --accent: #2beaa8;
 }
 
-/* 6. Cracked */
 html[data-theme="cracked"] {
   --bg: #120909;
   --surface: #1e0e0e;
@@ -74,7 +93,6 @@ html[data-theme="cracked"] {
   --accent: #ede0de;
 }
 
-/* 7. Hacked */
 html[data-theme="hacked"] {
   --bg: #0a0d0a;
   --surface: #0f1a10;
@@ -84,7 +102,6 @@ html[data-theme="hacked"] {
   --accent: #39ff6a;
 }
 
-/* 8. Sunfire (light) */
 html[data-theme="sunfire"] {
   --bg: #fffdf7;
   --surface: #fdf3d9;
@@ -94,97 +111,532 @@ html[data-theme="sunfire"] {
   --accent: #1a7a8a;
 }
 
+
 /* ==========================================================================
-   BASE PAGE — demo content styling only. Uses the theme variables above
-   but has nothing to do with the carousel component itself.
+   THEME PICKER
    ========================================================================== */
 
-* { box-sizing: border-box; }
+.theme-picker-reopen {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 101;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  transition: var(--transition-theme);
-  min-height: 100vh;
-}
+  width: 2.75rem;
+  height: 2.75rem;
 
-.page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem 6rem;
-}
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-.page h1 {
-  font-size: 28px;
-  font-weight: 600;
-  margin: 0 0 0.5rem;
-}
+  font-size: 1.25rem;
+  line-height: 1;
 
-.page p.lede {
-  color: var(--text-2);
-  font-size: 15px;
-  line-height: 1.6;
-  margin: 0 0 2rem;
-}
-
-.card {
   background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  cursor: pointer;
+  transition: var(--transition-theme), transform 0.15s ease;
+}
+
+.theme-picker-reopen:hover {
+  transform: scale(1.08);
+}
+
+.theme-picker-reopen--hidden {
+  display: none;
+}
+
+.theme-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  pointer-events: none;
+}
+
+.theme-picker-overlay::before {
+  content: '';
+
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.theme-picker-carousel {
+  display: block;
+  position: relative;
+
+  width: 15rem;
+  height: 30rem;
+
+  background: transparent;
+  pointer-events: auto;
+}
+
+.theme-card {
+  width: 200px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+
+  transition: var(--transition-theme);
+}
+
+.theme-card[data-theme-name="dark"] {
+  background: #121212;
+  color: #f5f5f5;
+  border: 1px solid #333333;
+}
+
+.theme-card[data-theme-name="light"] {
+  background: #ffffff;
+  color: #141414;
+  border: 1px solid #d8d8d8;
+}
+
+.theme-card[data-theme-name="night-ocean"] {
+  background: #0a1218;
+  color: #e6f2ee;
+  border: 1px solid #26404f;
+}
+
+.theme-card[data-theme-name="embers"] {
+  background: #242220;
+  color: #f4f1ee;
+  border: 1px solid #c9401f;
+}
+
+.theme-card[data-theme-name="aurora"] {
+  background: #100c1a;
+  color: #5fd6f0;
+  border: 1px solid #38295c;
+}
+
+.theme-card[data-theme-name="cracked"] {
+  background: #120909;
+  color: #e01f2e;
+  border: 1px solid #3d1616;
+}
+
+.theme-card[data-theme-name="hacked"] {
+  background: #0a0d0a;
+  color: #e6ffe9;
+  border: 1px solid #1e3a1f;
+}
+
+.theme-card[data-theme-name="sunfire"] {
+  background: #fffdf7;
+  color: #3a2a12;
+  border: 1px solid #f0c34a;
+}
+
+
+/* ==========================================================================
+   TITLE
+   ========================================================================== */
+
+.scroll-section__content h1 {
+  font-size: 10rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+}
+
+
+/* ==========================================================================
+   SCROLL SECTIONS
+   ========================================================================== */
+
+.scroll-sections {
+  position: relative;
+}
+
+.scroll-section {
+  position: relative;
+  min-height: 40rem;
+}
+
+.scroll-section__content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+
+  width: 100%;
+  padding: 0rem 2rem;
+
+  text-align: center;
+  color: var(--text);
+
+  opacity: 0;
+  transform: translate(-50%, -50%) translateY(3rem);
+
+  transition: opacity 0.3s ease, transform 0.3s ease;
+
+  pointer-events: none;
+}
+
+.scroll-section__content#Titlecard {
+  flex-direction: column;
+  font-style: bolder;
+}
+
+.scroll-section__content--pinned {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(0);
+  pointer-events: auto;
+}
+
+.scroll-section__content--above {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateY(-3rem);
+}
+
+.scroll-section__index {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  color: var(--text-2);
+  opacity: 0;
+
+  transition: opacity 0.3s ease;
+}
+
+.scroll-section__index--visible {
+  opacity: 0.5;
+}
+
+
+/* ==========================================================================
+   CONTENT CARDS
+   ========================================================================== */
+
+.pop-card {
+  background-color: var(--accent);
+
+  font-size: 4rem;
+
+  width: 20rem;
+  height: 20rem;
+  padding: 2rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 2rem;
+
+  font-weight: 600;
+}
+
+.pop-card#BringingPast {
+  text-align: left;
+}
+
+.pop-card#IntoFuture {
+  text-align: right;
+}
+
+.pop-card#GetToKnow {
+  text-align: left;
+}
+
+
+/* ==========================================================================
+   GET TO KNOW US — SECTION 3 CAROUSEL
+   ========================================================================== */
+
+.know-carousel {
+  display: block;
+  position: relative;
+
+  width: 48rem;
+  height: 30rem;
+
+  pointer-events: auto;
+}
+
+.know-card {
+  width: 33rem;
+  height: 18rem;
+
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+
+  background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1rem;
+  overflow: hidden;
+
+  user-select: none;
+
   transition: var(--transition-theme);
 }
 
-.card h2 {
-  font-size: 17px;
-  font-weight: 600;
-  margin: 0 0 6px;
+.know-card__text {
+  flex: 0 0 40%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
+  text-align: left;
+  gap: 0.5rem;
+
+  padding: 1.5rem;
 }
 
-.card p {
-  font-size: 14px;
-  color: var(--text-2);
-  line-height: 1.6;
+.know-card__title {
   margin: 0;
-}
-
-.btn-accent {
-  background: var(--accent);
-  color: var(--bg);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 18px;
-  font-size: 14px;
+  font-size: 1.25rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-theme), opacity 0.15s ease;
+  color: var(--text);
 }
-.btn-accent:hover { opacity: 0.85; }
 
-.open-picker-btn {
-  display: inline-flex;
+.know-card__desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.know-card__image {
+  flex: 1 1 auto;
+  height: 100%;
+
+  display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+
+  font-size: 0.75rem;
+  text-align: center;
+
+  background-color: var(--accent);
+  color: var(--bg);
+}
+
+
+/* ==========================================================================
+   SEE OUR PRODUCTS — SECTION 4 CAROUSEL
+   ========================================================================== */
+
+.scroll-section__content#ProductsSection {
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 5rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.products-wrapper-carousel {
+  display: block;
+  position: relative;
+
+  width: 100%;
+  height: 34rem;
+
+  pointer-events: auto;
+}
+
+.products-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2rem;
+
+  width: 100%;
+}
+
+.products-carousel {
+  display: block;
+  position: relative;
+
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40rem;
+
+  pointer-events: auto;
+}
+
+.products-carousel--deactivated {
+  pointer-events: none;
+}
+
+.product-card {
+  width: 20rem;
+  height: 20rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.65rem;
+  text-align: center;
+
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-2);
+
+  user-select: none;
+
+  transition: var(--transition-theme);
+}
+
+
+/* ==========================================================================
+   SECTION NAVIGATION
+   ========================================================================== */
+
+.section-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+
+  z-index: 1000;
+
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
   background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-theme), border-color 0.15s ease;
-}
-.open-picker-btn:hover { border-color: var(--accent); }
 
-.swatch-dot {
-  width: 14px;
-  height: 14px;
+  cursor: pointer;
+
+  opacity: 0.25;
+
+  isolation: isolate;
+
+  transition:
+    opacity 0.25s ease,
+    background-color 0.25s ease,
+    transform 0.15s ease;
+}
+
+.section-nav::before {
+  content: '';
+
+  position: absolute;
+  inset: 0;
+
+  border: 1px solid currentColor;
   border-radius: 50%;
-  background: var(--accent);
-  border: 1px solid var(--border);
-  flex-shrink: 0;
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  z-index: -1;
+
+  animation: section-nav-pulse 2s ease-out infinite;
+}
+
+.section-nav:hover {
+  opacity: 0.8;
+}
+
+.section-nav:hover::before {
+  animation-play-state: paused;
+}
+
+.section-nav:active {
+  transform: translateX(-50%) scale(0.88);
+}
+
+.section-nav svg {
+  width: 1.25rem;
+  height: 1.25rem;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.section-nav--up {
+  top: 1.25rem;
+}
+
+.section-nav--down {
+  bottom: 1.25rem;
+}
+
+@keyframes section-nav-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.18;
+  }
+
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+.site-footer {
+  position: relative;
+
+  padding: 4rem 2rem;
+  margin: 0;
+
+  text-align: center;
+
+  color: var(--text);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+
+  opacity: 1;
 }

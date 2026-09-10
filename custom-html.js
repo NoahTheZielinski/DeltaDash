@@ -787,11 +787,11 @@ class Carousel extends HTMLElement {
                     this.child_selected(
                         'enter',
                         this.#realChildren()[
-                            (
-                                (this.selected_item % this.#realChildren().length)
-                                + this.#realChildren().length
-                            )
-                            % this.#realChildren().length
+                        (
+                            (this.selected_item % this.#realChildren().length)
+                            + this.#realChildren().length
+                        )
+                        % this.#realChildren().length
                         ]
                     );
                 }
@@ -857,19 +857,63 @@ class Carousel extends HTMLElement {
 
         this.#initialized = true;
 
+
+        //#region Init Hook
+
+        // A JSON.stringify/parse round-trip of #config —
+        // strips functions (hooks) and gives external code a
+        // plain, safe-to-read snapshot of every config value
+        // without exposing the live private #config object
+        // itself. Computed once and reused for both init_hook
+        // and the carousel-init event below, so external code
+        // sees the exact same config shape either way it
+        // chooses to observe initialization.
+        const configSnapshot =
+            JSON.parse(
+                JSON.stringify(
+                    this.#config
+                )
+            );
+
         if (
             typeof this.#config.init_hook
             === 'function'
         ) {
             this.#config.init_hook(
                 this,
-                JSON.parse(
-                    JSON.stringify(
-                        this.#config
-                    )
-                )
+                configSnapshot
             );
         }
+
+        // Also dispatched as a real DOM event, independent of
+        // init_hook. init_hook is a config VALUE that must
+        // already be a function by the time THIS line runs —
+        // for a carousel declared directly in HTML markup,
+        // #initialize() runs during initial page parsing,
+        // before any external <script> has had a chance to
+        // set a hook, so init_hook is effectively unreachable
+        // from outside code for declarative markup. A DOM
+        // event has no such ordering requirement:
+        // addEventListener() queues normally whether it's
+        // called before or after this dispatch fires relative
+        // to page load, so this is the reliable way to observe
+        // "this carousel just finished initializing" — and the
+        // config snapshot on detail.config — from external
+        // code.
+        this.#DOMElement.dispatchEvent(
+            new CustomEvent(
+                'carousel-init',
+                {
+                    bubbles: true,
+                    detail: {
+                        carousel: this,
+                        config: configSnapshot
+                    }
+                }
+            )
+        );
+
+        //#endregion
     }
 
     //#endregion
@@ -1227,7 +1271,7 @@ class Carousel extends HTMLElement {
             if (
                 !existing
                 || Math.abs(distance)
-                    < Math.abs(existing.distance)
+                < Math.abs(existing.distance)
             ) {
 
                 closestSlotForIndex.set(
@@ -1762,6 +1806,27 @@ class Carousel extends HTMLElement {
             return value;
         }
 
+        // CSS `width` can never be negative — setting it
+        // to e.g. '-10rem' is simply rejected by the
+        // browser, leaving the probe at 0. To support
+        // negative separations (cards overlapping instead
+        // of gapping), strip the sign, resolve the
+        // magnitude against a valid positive width, then
+        // re-apply the sign to the resolved pixel value.
+        const trimmed =
+            typeof value === 'string'
+                ? value.trim()
+                : value;
+
+        const negative =
+            typeof trimmed === 'string'
+            && trimmed.startsWith('-');
+
+        const magnitude =
+            negative
+                ? trimmed.slice(1).trim()
+                : trimmed;
+
         const probe =
             document.createElement('div');
 
@@ -1775,7 +1840,7 @@ class Carousel extends HTMLElement {
             'none';
 
         probe.style.width =
-            value;
+            magnitude;
 
         // Attach inside this element so relative
         // units (em, %, etc.) resolve against the
@@ -1789,7 +1854,9 @@ class Carousel extends HTMLElement {
 
         probe.remove();
 
-        return resolved;
+        return negative
+            ? -resolved
+            : resolved;
     }
 
     /**
@@ -2296,7 +2363,7 @@ class Carousel extends HTMLElement {
                     )
                     + itemCount
                 )
-                % itemCount;
+                    % itemCount;
             }
 
             return Math.max(
@@ -2679,234 +2746,251 @@ class Carousel extends HTMLElement {
     //#endregion
 }
 
-// Registry: real source node -> Set of proxies mimicking it.
-// Lets a write made through ANY proxy (or through source-side
-// interception) propagate to every other mimic of that source.
-const mimicRegistry = new WeakMap();
+/*in prog
+class Menu extends HTMLElement {
 
-class Mimic extends HTMLElement {
-  #source = null;
-  #mutationObserver = null;
-  #excluded = new Set(['style']); // positioning-related, excluded by default
-  #proxy = null;
+    //#region State
 
-  static #ownMemberNames = new Set(
-    Object.getOwnPropertyNames(Mimic.prototype)
-  );
+    #DOMElement = this;
+    #config = {};
+    #initialized = false;
 
-  static get observedAttributes() {
-    return ['for'];
-  }
+    #collapsed = false;
+    #exposed = [];
 
-  connectedCallback() {
-    const forAttr = this.getAttribute('for');
-    if (forAttr && !this.#source) {
-      const el = document.getElementById(forAttr) ?? document.querySelector(forAttr);
-      if (el) this.mimic(el);
-    }
-  }
+    //#endregion
 
-  disconnectedCallback() {
-    this.#teardown();
-  }
 
-  exclude(name) {
-    this.#excluded.add(name);
-    return this;
-  }
+    //#region Lifecycle
 
-  include(name) {
-    this.#excluded.delete(name);
-    return this;
-  }
+    constructor(config = {}) {
+        super();
 
-  isExcluded(name) {
-    return this.#excluded.has(name) || Mimic.#ownMemberNames.has(name);
-  }
+        const presets = {
+            title_items: 1,
 
-  /**
-   * Makes this element mimic `source`. Returns a Proxy — THIS
-   * IS THE REFERENCE TO USE/STORE/PASS AROUND. The raw
-   * <mimic-el> instance in the DOM is real (needed for layout/
-   * positioning/visual presence) but only exposes Mimic's own
-   * declared API (exclude/include/mimic/source) directly;
-   * everything else routes through the returned proxy.
-   */
-  mimic(source) {
-    if (!(source instanceof HTMLElement)) {
-      throw new TypeError('Mimic target must be an HTMLElement');
-    }
-    if (source === this || this.contains(source) || source.contains(this)) {
-      throw new Error('Mimic cannot target itself or an ancestor/descendant');
-    }
+            collapse_structure: {
+                layout: 'vertical_list',
+                structure: 1
+            }, 
+            //vertical_list | [numb_columns]
+            //horizontal_list | [numb_rows]
+            //bound_grid | [columns],[rows],[overflow_behavior: cutoff | new_page]
+            
 
-    this.#teardown();
-    this.#source = source;
+            expand_justifiers: ['focus'],
+            collapse_justifiers: ['unfocus'],
 
-    this.#syncAttributesAndContent();
+            focus_justifier: ['mouse_enter', 'click'],
+            unfocus_justifier: ['mouse_exit', 'unclick'],
+            
+            hidden_opacity: 0,
+            opacity_adjust_time: 1,
 
-    this.#mutationObserver = new MutationObserver(() => this.#syncAttributesAndContent());
-    this.#mutationObserver.observe(source, {
-      attributes: true,
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
+            collapse_children_handling: 'hide', //cutoff, shrink
+            collapse_size_handling: 'shrink', //snap, fade
 
-    // Register this proxy against the source so property-level
-    // writes (from ANYWHERE — other mimics, or direct code) can
-    // fan out to it.
-    this.#proxy = new Proxy(this, this.#buildHandler());
 
-    let siblings = mimicRegistry.get(source);
-    if (!siblings) {
-      siblings = new Set();
-      mimicRegistry.set(source, siblings);
-      this.#interceptSourceProperties(source);
-    }
-    siblings.add(this);
+            collapsed: false,
+            focused: false,
 
-    return this.#proxy;
-  }
+            expand_hook: null,
+            collapse_hook: null,
 
-  release() {
-    if (this.#source) {
-      const siblings = mimicRegistry.get(this.#source);
-      siblings?.delete(this);
-    }
-    this.#teardown();
-  }
+            focus_hook: null,
+            unfocus_hook: null,
 
-  #teardown() {
-    if (this.#mutationObserver) {
-      this.#mutationObserver.disconnect();
-      this.#mutationObserver = null;
-    }
-    this.#source = null;
-    this.#proxy = null;
-  }
+            overflow_hook: null,
+            scollpage_hook: null,
 
-  #buildHandler() {
-    const self = this;
-    return {
-      get(target, prop, receiver) {
-        if (self.isExcluded(prop) || typeof prop === 'symbol') {
-          return Reflect.get(target, prop, receiver);
-        }
-        if (!self.#source) return Reflect.get(target, prop, receiver);
+            init_hook: null,
+            delete_hook: null
+        };
 
-        const value = self.#source[prop];
-        return typeof value === 'function' ? value.bind(self.#source) : value;
-      },
+        for (
+            const [parameter, preset]
+            of Object.entries(presets)
+        ) {
 
-      set(target, prop, value, receiver) {
-        if (self.isExcluded(prop) || typeof prop === 'symbol') {
-          return Reflect.set(target, prop, value, receiver);
-        }
-        if (!self.#source) return Reflect.set(target, prop, value, receiver);
+            const camelCaseParameter =
+                parameter.replace(
+                    /_([a-z])/g,
+                    (_, letter) =>
+                        letter.toUpperCase()
+                );
 
-        self.#source[prop] = value; // triggers the source-side interceptor below,
-        return true;                 // which fans out to sibling mimics automatically
-      },
+            if (
+                config[camelCaseParameter]
+                !== undefined
+            ) {
+                this.#config[parameter] =
+                    config[camelCaseParameter];
 
-      has(target, prop) {
-        if (self.isExcluded(prop)) return Reflect.has(target, prop);
-        return self.#source ? (prop in self.#source) : Reflect.has(target, prop);
-      },
-
-      deleteProperty(target, prop) {
-        if (self.isExcluded(prop)) return Reflect.deleteProperty(target, prop);
-        if (self.#source) delete self.#source[prop];
-        return true;
-      }
-    };
-  }
-
-  /**
-   * Called ONCE per source node, the first time anything
-   * mimics it. Redefines every own+inherited enumerable
-   * property found on the source (walking its prototype
-   * chain up to but excluding Node/EventTarget internals
-   * that can't be safely redefined) so that WRITES made
-   * directly to the source — from anywhere, not just through
-   * a mimic — propagate to every registered sibling mimic.
-   *
-   * NOTE: this can't cover truly every conceivable property
-   * (some platform accessors are non-configurable and will
-   * throw if you try to redefine them — e.g. a handful of
-   * low-level Node internals). Those are silently skipped;
-   * everything else (including custom class fields/getters
-   * like your Carousel's) is covered.
-   */
-  #interceptSourceProperties(source) {
-    const seen = new Set();
-    let proto = source;
-
-    while (proto && proto !== HTMLElement.prototype.__proto__) {
-      for (const name of Object.getOwnPropertyNames(proto)) {
-        if (seen.has(name) || name === 'constructor') continue;
-        seen.add(name);
-
-        const descriptor = Object.getOwnPropertyDescriptor(proto, name);
-        if (!descriptor || !descriptor.configurable) continue;
-
-        if (descriptor.value !== undefined && typeof descriptor.value !== 'function') {
-          // Plain data property — wrap in get/set that fans out.
-          let internal = descriptor.value;
-          Object.defineProperty(source, name, {
-            configurable: true,
-            enumerable: descriptor.enumerable,
-            get() { return internal; },
-            set(v) {
-              internal = v;
-              const siblings = mimicRegistry.get(source);
-              siblings?.forEach(m => m.#syncAttributesAndContent());
+                continue;
             }
-          });
-        } else if (descriptor.get || descriptor.set) {
-          // Accessor property (e.g. .value on an input via its
-          // prototype) — wrap the setter to also trigger sync.
-          const originalGet = descriptor.get;
-          const originalSet = descriptor.set;
-          Object.defineProperty(source, name, {
-            configurable: true,
-            enumerable: descriptor.enumerable,
-            get: originalGet,
-            set(v) {
-              originalSet?.call(source, v);
-              const siblings = mimicRegistry.get(source);
-              siblings?.forEach(m => m.#syncAttributesAndContent());
+
+            if (
+                this[camelCaseParameter]
+                !== undefined
+            ) {
+                this.#config[parameter] =
+                    this[camelCaseParameter];
+
+                continue;
             }
-          });
+
+            this.#config[parameter] =
+                preset;
         }
-        // functions are left alone here — calling a method
-        // doesn't itself need interception, only forwarding
-        // (already handled by the mimic's own get() trap)
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-  }
 
-  #syncAttributesAndContent() {
-    if (!this.#source) return;
+        this.#collapsed =
+            this.#config.collapsed;
 
-    if (!this.isExcluded('content') && this.innerHTML !== this.#source.innerHTML) {
-      this.innerHTML = this.#source.innerHTML;
+        if (this.#collapsed) {
+            this.collapse();
+        } else {
+            this.expand();
+        }
     }
 
-    for (const attr of this.#source.attributes) {
-      if (attr.name === 'id') continue;
-      if (this.isExcluded(attr.name)) continue;
-      if (this.getAttribute(attr.name) !== attr.value) {
-        this.setAttribute(attr.name, attr.value);
-      }
-    }
-  }
 
-  get source() {
-    return this.#source;
-  }
+    connectedCallback() {
+        this.#initialize();
+    }
+
+
+    disconnectedCallback() {
+
+        if (
+            typeof this.#config.delete_hook
+            === 'function'
+        ) {
+            this.#config.delete_hook.call(
+                this
+            );
+        }
+    }
+
+
+    #initialize() {
+
+        if (this.#initialized) {
+            return;
+        }
+
+        this.#initialized = true;
+
+        if (
+            typeof this.#config.init_hook
+            === 'function'
+        ) {
+            this.#config.init_hook.call(
+                this
+            );
+        }
+    }
+
+    //#endregion
+
+
+    //#region Configuration
+
+    get collapse_items() {
+        return this.#config.collapse_items;
+    }
+
+
+    get collapse_structure() {
+        return this.#config.collapse_structure;
+    }
+
+
+    get collapsed() {
+        return this.#collapsed;
+    }
+
+
+    get collapse_hook() {
+        return this.#config.collapse_hook;
+    }
+
+
+    get expand_hook() {
+        return this.#config.expand_hook;
+    }
+
+
+    get init_hook() {
+        return this.#config.init_hook;
+    }
+
+
+    get delete_hook() {
+        return this.#config.delete_hook;
+    }
+
+
+    get exposed_items() {
+        return this.#exposed;
+    }
+
+    //#endregion
+
+
+    //#region Collapse
+
+    collapse() {
+
+        if (this.#collapsed) {
+            return;
+        }
+
+        this.#collapsed = true;
+
+        this.#exposed =
+            [...this.children].slice(
+                0,
+                this.#config.collapse_items
+            );
+
+        if (
+            typeof this.#config.collapse_hook
+            === 'function'
+        ) {
+            this.#config.collapse_hook.call(
+                this
+            );
+        }
+    }
+
+
+    expand() {
+
+        if (!this.#collapsed) {
+            this.#exposed =
+                [...this.children];
+
+            return;
+        }
+
+        this.#collapsed = false;
+
+        this.#exposed =
+            [...this.children];
+
+        if (
+            typeof this.#config.expand_hook
+            === 'function'
+        ) {
+            this.#config.expand_hook.call(
+                this
+            );
+        }
+    }
+
+    //#endregion
 }
+*/
 
 
 customElements.define(
@@ -2914,7 +2998,9 @@ customElements.define(
     Carousel
 );
 
+/*in prog
 customElements.define(
-    'tidbit-mimic',
-    Mimic
+    'tidbit-menu',
+    Menu
 );
+*/

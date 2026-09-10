@@ -1,43 +1,220 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Choose your theme — carousel demo</title>
 
-<link rel="stylesheet" href="style.css">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Delta</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="vc-content-wrap">
-  <div class="page">
-    <h1>Theme carousel demo</h1>
-    <p class="lede">This page uses six shared CSS variables — <code>--bg</code>, <code>--surface</code>, <code>--border</code>, <code>--text</code>, <code>--text-2</code>, <code>--accent</code> — so every theme is a drop-in swap. The picker itself is a generic, reusable carousel component with no theme-specific logic baked in.</p>
+  <button type="button" class="theme-picker-reopen" id="themePickerReopen" aria-label="Open theme picker">
+    &#9881;
+  </button>
 
-    <button class="open-picker-btn" id="openPicker">
-      <span class="swatch-dot" id="currentSwatchDot"></span>
-      <span id="currentThemeLabel">Dark theme</span> — change
-    </button>
+  <button type="button" class="section-nav section-nav--up" id="sectionNavUp" aria-label="Previous section">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 14L12 8L18 14" />
+    </svg>
+  </button>
 
-    <div class="card" style="margin-top:1.5rem;">
-      <h2>Sample card</h2>
-      <p>This box uses --surface for its background and --border for its outline, so it always matches whichever theme is active.</p>
-    </div>
-    <div class="card">
-      <h2>Another section</h2>
-      <p>Secondary text like this uses --text-2, and the button below uses --accent.</p>
-      <div style="margin-top:12px;">
-        <button class="btn-accent">Accent action</button>
-      </div>
-    </div>
+  <button type="button" class="section-nav section-nav--down" id="sectionNavDown" aria-label="Next section">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 10L12 16L18 10" />
+    </svg>
+  </button>
+
+  <div class="theme-picker-overlay" id="themePickerOverlay">
+    <tidbit-carousel id="themePickerCarousel" class="theme-picker-carousel" exposed-items="5" selected-item="center"
+      wrap-items="true" stack-alignment="vertical" items-alignment="center" items-separation="1rem"
+      items-scale-mult="0.95" items-alpha-mult="0.5" scroll-justification="click_item,scroll,tab,arrows_vertical"
+      selectItem-justification="focused-click,enter,double-click" autoscroll-time="5000" scroll-speed="5"
+      autoscroll-speed="2">
+      <div class="theme-card" data-theme-name="dark">Dark</div>
+      <div class="theme-card" data-theme-name="light">Light</div>
+      <div class="theme-card" data-theme-name="night-ocean">Night ocean</div>
+      <div class="theme-card" data-theme-name="embers">Embers</div>
+      <div class="theme-card" data-theme-name="aurora">Aurora</div>
+      <div class="theme-card" data-theme-name="cracked">Cracked</div>
+      <div class="theme-card" data-theme-name="hacked">Hacked</div>
+      <div class="theme-card" data-theme-name="sunfire">Sunfire</div>
+    </tidbit-carousel>
   </div>
-</div>
 
-<!-- Mount point for the carousel modal markup (populated by code.js) -->
-<div id="themePickerMount"></div>
+  <main class="scroll-sections" id="scrollSections">
+    <section class="scroll-section" data-section-index="0">
+      <div class="scroll-section__content" id="Titlecard">
+        <h1 id="introLine1">WELCOME TO</h1>
+        <h1 id="introLine2">PROJECT DELTA</h1>
+      </div>
+    </section>
+    <section class="scroll-section" data-section-index="1">
+      <div class="scroll-section__content">
+        <div class="pop-card">Image Here</div>
+        <div class="pop-card" id="BringingPast">WE ARE BRINGING THE PAST</div>
+      </div>
+      <span class="scroll-section__index"></span>
+    </section>
+    <section class="scroll-section" data-section-index="2">
+      <div class="scroll-section__content">
+        <div class="pop-card" id="IntoFuture">INTO THE FUTURE</div>
+        <div class="pop-card">Image Here</div>
+      </div>
+      <span class="scroll-section__index"></span>
+    </section>
+    <section class="scroll-section" data-section-index="3">
+      <div class="scroll-section__content" id="GetToKnowSection">
+        <tidbit-carousel id="getToKnowCarousel" class="know-carousel" exposed-items="5" selected-item="center"
+          wrap-items="false" stack-alignment="horizontal" items-alignment="center" items-separation="-26rem"
+          items-scale-mult="0.75" items-alpha-mult="0.25" scroll-justification="click_item,scroll,tab,arrows_horizontal"
+          selectItem-justification="click,enter" scroll-speed="5">
+          <div class="know-card">
+            <div class="know-card__text">
+              <h3 class="know-card__title">Name</h3>
+              <p class="know-card__desc">Short description placeholder.</p>
+            </div>
+            <div class="know-card__image">Image Here</div>
+          </div>
+          <div class="know-card">
+            <div class="know-card__text">
+              <h3 class="know-card__title">Name</h3>
+              <p class="know-card__desc">Short description placeholder.</p>
+            </div>
+            <div class="know-card__image">Image Here</div>
+          </div>
+          <div class="know-card">
+            <div class="know-card__text">
+              <h3 class="know-card__title">Name</h3>
+              <p class="know-card__desc">Short description placeholder.</p>
+            </div>
+            <div class="know-card__image">Image Here</div>
+          </div>
+          <div class="know-card">
+            <div class="know-card__text">
+              <h3 class="know-card__title">Name</h3>
+              <p class="know-card__desc">Short description placeholder.</p>
+            </div>
+            <div class="know-card__image">Image Here</div>
+          </div>
+        </tidbit-carousel>
+        <div class="pop-card" id="GetToKnow">GET TO KNOW US</div>
+      </div>
+      <span class="scroll-section__index"></span>
+    </section>
+    <section class="scroll-section" data-section-index="4">
+      <div class="scroll-section__content" id="ProductsSection">
+        <h2 class="section-title">SEE PROJECT DELTA</h2>
+        <tidbit-carousel id="productsWrapperCarousel" class="products-wrapper-carousel" exposed-items="3" selected-item="0"
+          wrap-items="false" stack-alignment="vertical" items-alignment="center" items-separation="-37rem"
+          items-scale-mult="1" items-alpha-mult="0.1" scroll-justification="click_item,scroll,tab,arrows_vertical"
+          selectItem-justification="click,enter">
+      <div class="products-row">
+        <div class="pop-card">Comma 3x</div>
+        <tidbit-carousel id="productsCarousel1" class="products-carousel" exposed-items="7" selected-item="center"
+          wrap-items="true" stack-alignment="horizontal" items-alignment="center" items-separation="-10rem"
+          items-scale-mult="0.9" items-alpha-mult="1" scroll-justification="click_item,scroll,tab,arrows_horizontal"
+          selectItem-justification="click,enter" scroll-speed="5" autoscroll-speed="1" autoscroll-time="5000">
+          <div class="product-card">Image1 Here</div>
+          <div class="product-card">Image2 Here</div>
+          <div class="product-card">Image3 Here</div>
+          <div class="product-card">Image4 Here</div>
+          <div class="product-card">Image5 Here</div>
+          <div class="product-card">Image6 Here</div>
+          <div class="product-card">Image7 Here</div>
+          <div class="product-card">Image8 Here</div>
+          <div class="product-card">Image9 Here</div>
+          <div class="product-card">Image10 Here</div>
+          <div class="product-card">Image11 Here</div>
+          <div class="product-card">Image12 Here</div>
+          <div class="product-card">Image13 Here</div>
+          <div class="product-card">Image14 Here</div>
+          <div class="product-card">Image15 Here</div>
+          <div class="product-card">Image16 Here</div>
+          <div class="product-card">Image17 Here</div>
+          <div class="product-card">Image18 Here</div>
+          <div class="product-card">Image19 Here</div>
+          <div class="product-card">Image20 Here</div>
+        </tidbit-carousel>
+      </div>
+      <div class="products-row">
+        <div class="pop-card">Comma 3x clone</div>
+        <tidbit-carousel id="productsCarousel2" class="products-carousel" exposed-items="7" selected-item="center"
+          wrap-items="true" stack-alignment="horizontal" items-alignment="center" items-separation="-10rem"
+          items-scale-mult="0.9" items-alpha-mult="1" scroll-justification="click_item,scroll,tab,arrows_horizontal"
+          selectItem-justification="click,enter" scroll-speed="5" autoscroll-speed="1" autoscroll-time="5000">
+          <div class="product-card">Image1 Here</div>
+          <div class="product-card">Image2 Here</div>
+          <div class="product-card">Image3 Here</div>
+          <div class="product-card">Image4 Here</div>
+          <div class="product-card">Image5 Here</div>
+          <div class="product-card">Image6 Here</div>
+          <div class="product-card">Image7 Here</div>
+          <div class="product-card">Image8 Here</div>
+          <div class="product-card">Image9 Here</div>
+          <div class="product-card">Image10 Here</div>
+          <div class="product-card">Image11 Here</div>
+          <div class="product-card">Image12 Here</div>
+          <div class="product-card">Image13 Here</div>
+          <div class="product-card">Image14 Here</div>
+          <div class="product-card">Image15 Here</div>
+          <div class="product-card">Image16 Here</div>
+          <div class="product-card">Image17 Here</div>
+          <div class="product-card">Image18 Here</div>
+          <div class="product-card">Image19 Here</div>
+          <div class="product-card">Image20 Here</div>
+        </tidbit-carousel>
+      </div>
+      <div class="products-row">
+        <div class="pop-card">Comma 4</div>
+        <tidbit-carousel id="productsCarousel3" class="products-carousel" exposed-items="7" selected-item="center"
+          wrap-items="true" stack-alignment="horizontal" items-alignment="center" items-separation="-10rem"
+          items-scale-mult="0.9" items-alpha-mult="1" scroll-justification="click_item,scroll,tab,arrows_horizontal"
+          selectItem-justification="click,enter" scroll-speed="5" autoscroll-speed="1" autoscroll-time="5000">
+          <div class="product-card">Image1 Here</div>
+          <div class="product-card">Image2 Here</div>
+          <div class="product-card">Image3 Here</div>
+          <div class="product-card">Image4 Here</div>
+          <div class="product-card">Image5 Here</div>
+          <div class="product-card">Image6 Here</div>
+          <div class="product-card">Image7 Here</div>
+          <div class="product-card">Image8 Here</div>
+          <div class="product-card">Image9 Here</div>
+          <div class="product-card">Image10 Here</div>
+          <div class="product-card">Image11 Here</div>
+          <div class="product-card">Image12 Here</div>
+          <div class="product-card">Image13 Here</div>
+          <div class="product-card">Image14 Here</div>
+          <div class="product-card">Image15 Here</div>
+          <div class="product-card">Image16 Here</div>
+          <div class="product-card">Image17 Here</div>
+          <div class="product-card">Image18 Here</div>
+          <div class="product-card">Image19 Here</div>
+          <div class="product-card">Image20 Here</div>
+        </tidbit-carousel>
+      </div>
+        </tidbit-carousel>
+      </div>
+      <span class="scroll-section__index"></span>
+    </section>
+    <section class="scroll-section" data-section-index="5">
+      <div class="scroll-section__content">THIS iS SECTION 5</div>
+      <span class="scroll-section__index"></span>
+    </section>
+    <section class="scroll-section" data-section-index="6">
+      <div class="scroll-section__content">THIS iS SECTION 6</div>
+      <span class="scroll-section__index"></span>
+    </section>
+  </main>
 
-<script src="custom-html.js" type="module"></script>
-<script src="code.js" type="module"></script>
+  <footer class="site-footer" id="siteFooter">
+    <p>Footer — always full opacity, no fade.</p>
+  </footer>
+
+  <script src="custom-html.js" type="module"></script>
+  <script src="code.js" type="module"></script>
 
 </body>
+
 </html>
